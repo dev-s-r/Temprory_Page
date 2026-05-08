@@ -164,8 +164,11 @@
 
 <script>
   let activeGame = null;
+  // 0..1 smoothing factor for breakout paddle easing.
   const PADDLE_EASING_FACTOR = 0.35;
+  // Minimum swipe distance in pixels to trigger a snake direction change.
   const SWIPE_THRESHOLD = 18;
+  // Snake movement tick interval in milliseconds.
   const SNAKE_UPDATE_INTERVAL_MS = 65;
 
   // --- GAME 1: BREAKOUT (Matrix Levels) ---
