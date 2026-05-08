@@ -73,7 +73,7 @@
           </div>
         </div>
 
-        <canvas id="breakoutCanvas" width="1000" height="400" style="touch-action:none;" class="absolute inset-0 w-full h-full opacity-0 pointer-events-none transition-opacity duration-300 z-20"></canvas>
+        <canvas id="breakoutCanvas" width="1000" height="400" class="absolute inset-0 w-full h-full opacity-0 pointer-events-none transition-opacity duration-300 z-20"></canvas>
         
         <!-- Level Interstitial -->
         <div id="breakout-interstitial" class="absolute inset-0 z-30 flex flex-col items-center justify-center bg-paper/95 opacity-0 pointer-events-none transition-opacity duration-300">
@@ -102,7 +102,7 @@
           </div>
         </div>
 
-        <canvas id="snakeCanvas" width="300" height="400" style="touch-action:none;" class="absolute inset-0 w-full h-full opacity-0 pointer-events-none transition-opacity duration-300 z-20"></canvas>
+        <canvas id="snakeCanvas" width="300" height="400" class="absolute inset-0 w-full h-full opacity-0 pointer-events-none transition-opacity duration-300 z-20"></canvas>
       </div>
 
       <!-- GAME 3: Sequence Diagnostic Data Blocks -->
@@ -127,7 +127,7 @@
         </div>
         <div>
           <h2 class="font-display font-extrabold text-[1.75rem] sm:text-4xl md:text-5xl uppercase tracking-tighter mb-2 md:mb-4 text-muted pointer-events-none">Pending</h2>
-          <p class="font-medium text-xs md:text-base text-muted pointer-events-none">When I figure out what I just broke.</p>
+          <p class="font-medium text-xs md:text-base text-muted pointer-events-none">When the GST portal stops crashing.</p>
         </div>
       </div>
 
@@ -164,12 +164,6 @@
 
 <script>
   let activeGame = null;
-  // 0..1 smoothing factor for breakout paddle easing.
-  const PADDLE_EASING_FACTOR = 0.35;
-  // Minimum swipe distance in pixels to trigger a snake direction change.
-  const SWIPE_THRESHOLD = 18;
-  // Snake movement tick interval in milliseconds.
-  const SNAKE_UPDATE_INTERVAL_MS = 65;
 
   // --- GAME 1: BREAKOUT (Matrix Levels) ---
   const bCanvas = document.getElementById('breakoutCanvas');
@@ -179,7 +173,7 @@
 
   const breakout = {
     ball: { x: 500, y: 350, dx: 6, dy: -6, radius: 6 },
-    paddle: { w: 100, h: 10, x: 450, y: 380, targetX: 450 },
+    paddle: { w: 100, h: 10, x: 450, y: 380 },
     bricks: [],
     currentLevel: 0,
     colors: ['#F4F6F8', '#2563EB', '#059669', '#E11D48', '#D97706'], 
@@ -239,13 +233,10 @@
         }
       }
 
-      this.ball.x = bCanvas.width / 2;
-      this.ball.y = bCanvas.height - 60;
-      const speed = 6 + (lvlIndex * 1.2); 
+      this.ball.x = 500; this.ball.y = 340;
+      const speed = 5 + (lvlIndex * 1.0); // Smoother base speed to prevent frame skipping
       this.ball.dx = speed * (Math.random() > 0.5 ? 1 : -1);
       this.ball.dy = -speed;
-      this.paddle.x = (bCanvas.width - this.paddle.w) / 2;
-      this.paddle.targetX = this.paddle.x;
     }
   };
 
@@ -280,10 +271,10 @@
     if(!bActive) return;
     const rect = bCanvas.getBoundingClientRect();
     let percentX = (clientX - rect.left) / rect.width;
-    breakout.paddle.targetX = percentX * bCanvas.width - (breakout.paddle.w / 2);
+    breakout.paddle.x = percentX * bCanvas.width - (breakout.paddle.w / 2);
     
-    if(breakout.paddle.targetX < 0) breakout.paddle.targetX = 0;
-    if(breakout.paddle.targetX > bCanvas.width - breakout.paddle.w) breakout.paddle.targetX = bCanvas.width - breakout.paddle.w;
+    if(breakout.paddle.x < 0) breakout.paddle.x = 0;
+    if(breakout.paddle.x > bCanvas.width - breakout.paddle.w) breakout.paddle.x = bCanvas.width - breakout.paddle.w;
   }
 
   bCanvas.addEventListener('mousemove', (e) => handlePaddleMove(e.clientX));
@@ -295,7 +286,6 @@
   function drawBreakout() {
     if(!bActive) return;
     bCtx.clearRect(0, 0, bCanvas.width, bCanvas.height);
-    breakout.paddle.x += (breakout.paddle.targetX - breakout.paddle.x) * PADDLE_EASING_FACTOR;
     
     bCtx.lineWidth = 1.5;
     bCtx.strokeStyle = '#0B1221';
@@ -380,24 +370,18 @@
   let sReq;
   
   const snakeGame = {
-    grid: 10,
+    grid: 15,
     snake: [],
     food: {x:0, y:0},
-    dx: 10, dy: 0,
+    dx: 15, dy: 0,
     init: function() {
-      const startX = Math.floor((sCanvas.width / 2) / this.grid) * this.grid;
-      const startY = Math.floor((sCanvas.height / 2) / this.grid) * this.grid;
-      this.snake = [
-        {x: startX, y: startY},
-        {x: startX - this.grid, y: startY},
-        {x: startX - (this.grid * 2), y: startY}
-      ];
-      this.dx = this.grid; this.dy = 0;
+      this.snake = [{x: 150, y: 150}, {x: 135, y: 150}, {x: 120, y: 150}];
+      this.dx = 15; this.dy = 0;
       this.placeFood();
     },
     placeFood: function() {
-      this.food.x = Math.floor(Math.random() * (sCanvas.width / this.grid)) * this.grid;
-      this.food.y = Math.floor(Math.random() * (sCanvas.height / this.grid)) * this.grid;
+      this.food.x = Math.floor(Math.random() * (300/this.grid)) * this.grid;
+      this.food.y = Math.floor(Math.random() * (400/this.grid)) * this.grid;
     }
   };
 
@@ -417,48 +401,52 @@
 
   document.addEventListener('keydown', (e) => {
     if(activeGame !== 'snake') return;
-    if(e.key === 'ArrowUp' && snakeGame.dy === 0) { snakeGame.dx = 0; snakeGame.dy = -snakeGame.grid; e.preventDefault();}
-    if(e.key === 'ArrowDown' && snakeGame.dy === 0) { snakeGame.dx = 0; snakeGame.dy = snakeGame.grid; e.preventDefault();}
-    if(e.key === 'ArrowLeft' && snakeGame.dx === 0) { snakeGame.dx = -snakeGame.grid; snakeGame.dy = 0; e.preventDefault();}
-    if(e.key === 'ArrowRight' && snakeGame.dx === 0) { snakeGame.dx = snakeGame.grid; snakeGame.dy = 0; e.preventDefault();}
+    if(e.key === 'ArrowUp' && snakeGame.dy === 0) { snakeGame.dx = 0; snakeGame.dy = -15; e.preventDefault();}
+    if(e.key === 'ArrowDown' && snakeGame.dy === 0) { snakeGame.dx = 0; snakeGame.dy = 15; e.preventDefault();}
+    if(e.key === 'ArrowLeft' && snakeGame.dx === 0) { snakeGame.dx = -15; snakeGame.dy = 0; e.preventDefault();}
+    if(e.key === 'ArrowRight' && snakeGame.dx === 0) { snakeGame.dx = 15; snakeGame.dy = 0; e.preventDefault();}
   });
 
   // Mobile Swipe Controls for Snake
   let touchStartX = 0;
   let touchStartY = 0;
-
-  function setSnakeDirection(diffX, diffY) {
-    if(Math.abs(diffX) > Math.abs(diffY)) {
-      if(diffX > SWIPE_THRESHOLD && snakeGame.dx === 0) { snakeGame.dx = snakeGame.grid; snakeGame.dy = 0; }
-      else if(diffX < -SWIPE_THRESHOLD && snakeGame.dx === 0) { snakeGame.dx = -snakeGame.grid; snakeGame.dy = 0; }
-    } else {
-      if(diffY > SWIPE_THRESHOLD && snakeGame.dy === 0) { snakeGame.dx = 0; snakeGame.dy = snakeGame.grid; }
-      else if(diffY < -SWIPE_THRESHOLD && snakeGame.dy === 0) { snakeGame.dx = 0; snakeGame.dy = -snakeGame.grid; }
-    }
-  }
-
-  sCanvas.addEventListener('touchstart', e => {
-    if(activeGame !== 'snake') return;
-    e.preventDefault();
+  
+  document.addEventListener('touchstart', e => {
     touchStartX = e.changedTouches[0].screenX;
     touchStartY = e.changedTouches[0].screenY;
+  }, {passive: true});
+
+  // Intercept scroll during gameplay
+  document.addEventListener('touchmove', e => {
+    if (activeGame === 'snake') {
+      e.preventDefault();
+    }
   }, {passive: false});
 
-  sCanvas.addEventListener('touchmove', e => {
+  document.addEventListener('touchend', e => {
     if(activeGame !== 'snake') return;
-    e.preventDefault();
-    const touchX = e.changedTouches[0].screenX;
-    const touchY = e.changedTouches[0].screenY;
-    setSnakeDirection(touchX - touchStartX, touchY - touchStartY);
-    touchStartX = touchX;
-    touchStartY = touchY;
-  }, {passive: false});
+    let touchEndX = e.changedTouches[0].screenX;
+    let touchEndY = e.changedTouches[0].screenY;
+    
+    let diffX = touchEndX - touchStartX;
+    let diffY = touchEndY - touchStartY;
+    
+    if(Math.abs(diffX) > Math.abs(diffY)) {
+      // Horizontal swipe
+      if(diffX > 30 && snakeGame.dx === 0) { snakeGame.dx = 15; snakeGame.dy = 0; }
+      else if(diffX < -30 && snakeGame.dx === 0) { snakeGame.dx = -15; snakeGame.dy = 0; }
+    } else {
+      // Vertical swipe
+      if(diffY > 30 && snakeGame.dy === 0) { snakeGame.dx = 0; snakeGame.dy = 15; }
+      else if(diffY < -30 && snakeGame.dy === 0) { snakeGame.dx = 0; snakeGame.dy = -15; }
+    }
+  }, {passive: true});
 
   let lastS = 0;
   function sLoop(time) {
     if(!sActive) return;
     sReq = requestAnimationFrame(sLoop);
-    if(time - lastS < SNAKE_UPDATE_INTERVAL_MS) return; 
+    if(time - lastS < 50) return; // Dropped throttle delay for higher framerate
     lastS = time;
 
     sCtx.fillStyle = '#0B1221'; 
@@ -466,7 +454,7 @@
 
     const head = {x: snakeGame.snake[0].x + snakeGame.dx, y: snakeGame.snake[0].y + snakeGame.dy};
     
-    if(head.x < 0 || head.x >= sCanvas.width || head.y < 0 || head.y >= sCanvas.height || snakeGame.snake.some(s => s.x === head.x && s.y === head.y)) {
+    if(head.x < 0 || head.x >= 300 || head.y < 0 || head.y >= 400 || snakeGame.snake.some(s => s.x === head.x && s.y === head.y)) {
       sActive = false;
       activeGame = null;
       document.getElementById('snake-ui').style.opacity = '1';
