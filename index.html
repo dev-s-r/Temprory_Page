@@ -73,7 +73,7 @@
           </div>
         </div>
 
-        <canvas id="breakoutCanvas" width="1000" height="400" class="absolute inset-0 w-full h-full opacity-0 pointer-events-none transition-opacity duration-300 z-20"></canvas>
+        <canvas id="breakoutCanvas" width="1000" height="400" style="touch-action:none;" class="absolute inset-0 w-full h-full opacity-0 pointer-events-none transition-opacity duration-300 z-20"></canvas>
         
         <!-- Level Interstitial -->
         <div id="breakout-interstitial" class="absolute inset-0 z-30 flex flex-col items-center justify-center bg-paper/95 opacity-0 pointer-events-none transition-opacity duration-300">
@@ -102,7 +102,7 @@
           </div>
         </div>
 
-        <canvas id="snakeCanvas" width="300" height="400" class="absolute inset-0 w-full h-full opacity-0 pointer-events-none transition-opacity duration-300 z-20"></canvas>
+        <canvas id="snakeCanvas" width="300" height="400" style="touch-action:none;" class="absolute inset-0 w-full h-full opacity-0 pointer-events-none transition-opacity duration-300 z-20"></canvas>
       </div>
 
       <!-- GAME 3: Sequence Diagnostic Data Blocks -->
@@ -250,7 +250,6 @@
     if(activeGame && activeGame !== 'breakout') return;
     activeGame = 'breakout';
     if(bReq) cancelAnimationFrame(bReq);
-    bCanvas.style.touchAction = 'none';
     
     document.getElementById('breakout-ui').style.opacity = '0';
     setTimeout(() => { document.getElementById('breakout-ui').style.pointerEvents = 'none'; }, 300);
@@ -404,7 +403,6 @@
     if(activeGame && activeGame !== 'snake') return;
     activeGame = 'snake';
     if(sReq) cancelAnimationFrame(sReq);
-    sCanvas.style.touchAction = 'none';
     
     document.getElementById('snake-ui').style.opacity = '0';
     sCanvas.style.opacity = '1';
