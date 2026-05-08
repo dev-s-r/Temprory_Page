@@ -381,13 +381,19 @@
     food: {x:0, y:0},
     dx: 10, dy: 0,
     init: function() {
-      this.snake = [{x: 150, y: 150}, {x: 140, y: 150}, {x: 130, y: 150}];
+      const startX = Math.floor((sCanvas.width / 2) / this.grid) * this.grid;
+      const startY = Math.floor((sCanvas.height / 2) / this.grid) * this.grid;
+      this.snake = [
+        {x: startX, y: startY},
+        {x: startX - this.grid, y: startY},
+        {x: startX - (this.grid * 2), y: startY}
+      ];
       this.dx = this.grid; this.dy = 0;
       this.placeFood();
     },
     placeFood: function() {
-      this.food.x = Math.floor(Math.random() * (300/this.grid)) * this.grid;
-      this.food.y = Math.floor(Math.random() * (400/this.grid)) * this.grid;
+      this.food.x = Math.floor(Math.random() * (sCanvas.width / this.grid)) * this.grid;
+      this.food.y = Math.floor(Math.random() * (sCanvas.height / this.grid)) * this.grid;
     }
   };
 
