@@ -164,6 +164,9 @@
 
 <script>
   let activeGame = null;
+  const PADDLE_EASING_FACTOR = 0.35;
+  const SWIPE_THRESHOLD = 18;
+  const SNAKE_UPDATE_INTERVAL_MS = 65;
 
   // --- GAME 1: BREAKOUT (Matrix Levels) ---
   const bCanvas = document.getElementById('breakoutCanvas');
@@ -288,7 +291,7 @@
   function drawBreakout() {
     if(!bActive) return;
     bCtx.clearRect(0, 0, bCanvas.width, bCanvas.height);
-    breakout.paddle.x += (breakout.paddle.targetX - breakout.paddle.x) * 0.35;
+    breakout.paddle.x += (breakout.paddle.targetX - breakout.paddle.x) * PADDLE_EASING_FACTOR;
     
     bCtx.lineWidth = 1.5;
     bCtx.strokeStyle = '#0B1221';
@@ -416,11 +419,11 @@
 
   function setSnakeDirection(diffX, diffY) {
     if(Math.abs(diffX) > Math.abs(diffY)) {
-      if(diffX > 18 && snakeGame.dx === 0) { snakeGame.dx = snakeGame.grid; snakeGame.dy = 0; }
-      else if(diffX < -18 && snakeGame.dx === 0) { snakeGame.dx = -snakeGame.grid; snakeGame.dy = 0; }
+      if(diffX > SWIPE_THRESHOLD && snakeGame.dx === 0) { snakeGame.dx = snakeGame.grid; snakeGame.dy = 0; }
+      else if(diffX < -SWIPE_THRESHOLD && snakeGame.dx === 0) { snakeGame.dx = -snakeGame.grid; snakeGame.dy = 0; }
     } else {
-      if(diffY > 18 && snakeGame.dy === 0) { snakeGame.dx = 0; snakeGame.dy = snakeGame.grid; }
-      else if(diffY < -18 && snakeGame.dy === 0) { snakeGame.dx = 0; snakeGame.dy = -snakeGame.grid; }
+      if(diffY > SWIPE_THRESHOLD && snakeGame.dy === 0) { snakeGame.dx = 0; snakeGame.dy = snakeGame.grid; }
+      else if(diffY < -SWIPE_THRESHOLD && snakeGame.dy === 0) { snakeGame.dx = 0; snakeGame.dy = -snakeGame.grid; }
     }
   }
 
@@ -448,7 +451,7 @@
   function sLoop(time) {
     if(!sActive) return;
     sReq = requestAnimationFrame(sLoop);
-    if(time - lastS < 65) return; 
+    if(time - lastS < SNAKE_UPDATE_INTERVAL_MS) return; 
     lastS = time;
 
     sCtx.fillStyle = '#0B1221'; 
