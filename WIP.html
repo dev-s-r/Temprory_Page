@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dev Singh Rathore // Work In Progress</title>
+<meta name="description" content="Site under reconstruction.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;500;600&family=DM+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ─────────────────────────────────────────
+   TOKENS & CORE
+───────────────────────────────────────── */
+:root {
+  --ink:     #0d0d0d;
+  --paper:   #f0ede8;
+  --muted:   #888888;
+  --gap:     3px;
+
+  --c-blue:  #1a56ff; /* Tic-Tac-Toe */
+  --c-green: #0a7a5a; /* System Log */
+  --c-red:   #c4161c; /* Chess */
+  --c-viol:  #6d28d9; /* Hero Accent 1 */
+  --c-amb:   #b45309; /* Hero Accent 2 */
+
+  --sq-light: #f0ede8;
+  --sq-dark:  #d6d1c8;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { font-size:16px; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Archivo', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  gap: 14px;
+}
+
+/* ─────────────────────────────────────────
+   HEADER
+───────────────────────────────────────── */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 13px;
+  border-bottom: 2px solid var(--ink);
+}
+.h-name {
+  font-family: 'Archivo Black', sans-serif;
+  font-size: clamp(14px, 2vw, 18px);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.h-meta {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: right;
+  line-height: 1.7;
+}
+
+/* ─────────────────────────────────────────
+   MOSAIC GRID
+───────────────────────────────────────── */
+.mosaic {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  grid-auto-rows: min-content;
+  gap: var(--gap);
+  background: var(--ink);
+  border: 2px solid var(--ink);
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.cell {
+  background: var(--paper);
+  display: flex;
+  flex-direction: column;
+  padding: 24px 28px;
+  color: var(--ink);
+  position: relative;
+  overflow: hidden;
+}
+
+.lbl {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 16px;
+  display: block;
+}
+
+.c-title {
+  font-family: 'Archivo Black', sans-serif;
+  font-size: clamp(24px, 3vw, 36px);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+/* ─────────────────────────────────────────
+   CELL 1: HERO (CONSTRUCTION)
+───────────────────────────────────────── */
+.cell-hero {
+  grid-column: 1 / -1;
+  padding: 40px 28px;
+  justify-content: center;
+  background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.03) 10px, rgba(0,0,0,0.03) 20px);
+}
+.hero-text {
+  font-family: 'Archivo Black', sans-serif;
+  font-size: clamp(32px, 5vw, 64px);
+  line-height: 0.95;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  max-width: 900px;
+}
+.hero-sub {
+  margin-top: 16px;
+  font-size: clamp(14px, 1.5vw, 18px);
+  color: #555;
+  max-width: 600px;
+  line-height: 1.6;
+}
+.color-bar {
+  display: flex; height: 6px; width: 100px; gap: 2px; margin-bottom: 20px;
+}
+.cb-1 { background: var(--c-viol); flex: 1; }
+.cb-2 { background: var(--c-amb); flex: 1; }
+
+.blink { animation: blinker 1s linear infinite; }
+@keyframes blinker { 50% { opacity: 0; } }
+
+/* ─────────────────────────────────────────
+   GAME UI CONTROLS
+───────────────────────────────────────── */
+.board-ui-row {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  margin-bottom: 12px; font-family: 'DM Mono', monospace; font-size: 10px;
+  text-transform: uppercase; font-weight: 700;
+}
+
+.btn-row { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+
+.btn {
+  font-family: 'Archivo Black', sans-serif; font-size: 11px; text-transform: uppercase;
+  background: var(--paper); color: var(--ink); border: 2px solid var(--ink);
+  padding: 10px 14px; cursor: pointer; outline: none; transition: all 0.15s;
+  flex: 1; text-align: center; min-width: 120px;
+}
+.btn.red:hover { background: var(--c-red); color: var(--paper); border-color: var(--c-red); }
+.btn.blue:hover { background: var(--c-blue); color: var(--paper); border-color: var(--c-blue); }
+.btn:active { transform: translateY(2px); }
+
+select {
+  appearance: none; border-radius: 0; outline: none;
+  font-family: 'Archivo Black', sans-serif; font-size: 11px; text-transform: uppercase;
+  border: 2px solid var(--ink); background: var(--paper); color: var(--ink);
+  padding: 10px 32px 10px 14px; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%230B1221' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
+  transition: all 0.15s;
+}
+.red-sel:hover, .red-sel:focus { border-color: var(--c-red); color: var(--c-red); }
+.blue-sel:hover, .blue-sel:focus { border-color: var(--c-blue); color: var(--c-blue); }
+
+.board-container {
+  position: relative; width: 100%;
+}
+.board-overlay {
+  position: absolute; inset: 0; z-index: 20;
+  background: rgba(240, 237, 232, 0.85); backdrop-filter: blur(4px);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 700;
+  text-transform: uppercase; color: var(--ink); border: 2px solid var(--ink);
+  transition: opacity 0.3s;
+}
+.board-overlay.hidden { opacity: 0; pointer-events: none; }
+
+/* ─────────────────────────────────────────
+   CELL 2: CHESS (RED)
+───────────────────────────────────────── */
+.cell-chess { border-top: 4px solid var(--c-red); }
+
+#chess-board {
+  width: 100%; max-width: 480px; margin: 0 auto;
+  aspect-ratio: 1 / 1;
+  border: 2px solid var(--ink);
+  display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr);
+  touch-action: manipulation;
+}
+
+.c-sq {
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; user-select: none; position: relative;
+  font-size: clamp(1.4rem, 5vw, 2.8rem);
+}
+.c-sq.light { background-color: var(--sq-light); }
+.c-sq.dark  { background-color: var(--sq-dark); }
+
+.c-piece { pointer-events: none; line-height: 1; font-family: Arial, sans-serif; z-index: 5; }
+.c-piece.b { color: var(--ink); } 
+.c-piece.w { color: var(--paper); -webkit-text-stroke: 1.5px var(--ink); }
+@media (max-width: 480px) { .c-piece.w { -webkit-text-stroke: 1px var(--ink); } }
+
+.c-sq.selected { background-color: var(--c-red) !important; }
+.c-sq.selected .c-piece { -webkit-text-stroke: 0 !important; color: var(--paper) !important; }
+.c-sq.in-check { background-color: var(--c-red) !important; }
+.c-sq.in-check .c-piece { -webkit-text-stroke: 0 !important; color: var(--paper) !important; }
+.c-sq.last-from { background-color: rgba(196, 22, 28, 0.15) !important; }
+.c-sq.last-to   { background-color: rgba(196, 22, 28, 0.25) !important; }
+
+.c-sq.valid-move::after {
+  content: ''; position: absolute; z-index: 2;
+  width: 25%; height: 25%; background-color: rgba(0,0,0,0.2); border-radius: 50%;
+}
+.c-sq.valid-move:not(:empty)::after {
+  width: 85%; height: 85%; 
+  background-color: transparent; border: 3px solid rgba(0,0,0,0.2); border-radius: 50%;
+}
+
+/* ─────────────────────────────────────────
+   CELL 3: TIC-TAC-TOE (BLUE)
+───────────────────────────────────────── */
+.cell-ttt {
+  border-top: 4px solid var(--c-blue);
+  display: flex; flex-direction: column;
+}
+
+#ttt-board {
+  width: 100%; max-width: 320px; margin: 0 auto 20px;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 1.5px; background: var(--ink);
+  border: 1.5px solid var(--ink);
+}
+
+.t-sq {
+  background: var(--paper);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Archivo Black', sans-serif;
+  font-size: clamp(3rem, 10vw, 5rem);
+  cursor: pointer; color: var(--ink);
+  transition: background 0.1s;
+}
+.t-sq:hover:not(.taken) { background: #e5e2db; }
+.t-sq.x-mark { color: var(--ink); }
+.t-sq.o-mark { color: var(--c-blue); }
+
+.t-status {
+  font-family: 'DM Mono', monospace; font-size: 11px; text-transform: uppercase;
+  text-align: center; margin-bottom: auto; color: var(--muted);
+}
+.t-status.win { color: var(--c-blue); font-weight: 600; }
+
+/* ─────────────────────────────────────────
+   CELL 4: SYSTEM LOG (GREEN)
+───────────────────────────────────────── */
+.cell-log {
+  grid-column: 1 / -1;
+  border-top: 4px solid var(--c-green);
+  padding: 16px 28px;
+}
+
+.log-stream {
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  color: var(--c-green); display: flex; flex-direction: column; gap: 4px;
+}
+
+/* ─────────────────────────────────────────
+   RESPONSIVE
+───────────────────────────────────────── */
+@media (max-width: 860px) {
+  .mosaic { grid-template-columns: 1fr; }
+}
+@media (max-width: 540px) {
+  body { padding: 10px; gap: 10px; }
+  .cell { padding: 20px 18px; }
+  .hero-text { font-size: 28px; }
+  .btn { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="h-name">Dev Singh Rathore</div>
+  <div class="h-meta">State: Refactoring<br>Access: Limited</div>
+</header>
+
+<main class="mosaic">
+
+  <!-- HERO -->
+  <div class="cell cell-hero">
+    <div class="color-bar"><div class="cb-1"></div><div class="cb-2"></div></div>
+    <span class="lbl">Notice // Root Directory</span>
+    <h1 class="hero-text">The old structure was compromised. A rebuild is in progress.</h1>
+    <p class="hero-sub">
+      I tore down the previous design. It was getting noisy. While the new architecture compiles, I've exposed two local logic engines. You can leave, or you can test them. Your call.
+    </p>
+  </div>
+
+  <!-- CHESS -->
+  <div class="cell cell-chess">
+    <span class="lbl">Module 01 // Tactical</span>
+    <h2 class="c-title">Chess.exe</h2>
+    
+    <div class="board-ui-row">
+      <span style="color:var(--muted)">Mode Parameters</span>
+      <span id="chess-status" style="color:var(--c-red);">System Standby</span>
+    </div>
+
+    <div class="board-container" style="max-width: 480px; margin: 0 auto;">
+      <div id="chess-overlay" class="board-overlay">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+        Awaiting Initialization
+      </div>
+      <div id="chess-board"></div>
+    </div>
+
+    <div class="btn-row">
+      <select id="chess-mode" class="red-sel">
+        <option value="2p">2 Player</option>
+        <option value="easy">CPU - Easy</option>
+        <option value="medium" selected>CPU - Medium</option>
+        <option value="hard">CPU - Hard</option>
+      </select>
+      <button class="btn red" onclick="ChessEngine.start()">Initialize</button>
+    </div>
+  </div>
+
+  <!-- TIC TAC TOE -->
+  <div class="cell cell-ttt">
+    <span class="lbl">Module 02 // Solved Game</span>
+    <h2 class="c-title">Tic-Tac-Toe</h2>
+    
+    <div class="board-ui-row" style="max-width:320px; margin:0 auto 12px;">
+      <span style="color:var(--muted)">Mode Parameters</span>
+    </div>
+
+    <div class="board-container" style="max-width: 320px; margin: 0 auto;">
+      <div id="ttt-overlay" class="board-overlay">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px;"><line x1="4" y1="4" x2="20" y2="20"></line><line x1="20" y1="4" x2="4" y2="20"></line></svg>
+        Awaiting Initialization
+      </div>
+      <div id="ttt-board"></div>
+    </div>
+    
+    <div id="ttt-status" class="t-status">System Standby</div>
+
+    <div class="btn-row" style="max-width:320px; margin:16px auto 0;">
+      <select id="ttt-mode" class="blue-sel">
+        <option value="2p">2 Player</option>
+        <option value="easy">CPU - Easy</option>
+        <option value="medium">CPU - Medium</option>
+        <option value="hard" selected>CPU - Hard</option>
+      </select>
+      <button class="btn blue" onclick="TTTEngine.start()">Initialize</button>
+    </div>
+  </div>
+
+  <!-- SYSTEM LOG -->
+  <div class="cell cell-log">
+    <div class="log-stream" id="sys-log">
+      <span>> Initialization complete.</span>
+      <span>> Awaiting user interaction...</span>
+    </div>
+  </div>
+
+</main>
+
+<script>
+/* ─────────────────────────────────────────
+   SYSTEM LOGGER
+───────────────────────────────────────── */
+const SysLog = {
+  el: document.getElementById('sys-log'),
+  msg: function(text) {
+    const span = document.createElement('span');
+    span.textContent = `> ${text}`;
+    this.el.appendChild(span);
+    if (this.el.children.length > 4) {
+      this.el.removeChild(this.el.firstChild);
+    }
+  }
+};
+
+/* ─────────────────────────────────────────
+   TIC-TAC-TOE ENGINE (Minimax - Unbeatable)
+───────────────────────────────────────── */
+const TTTEngine = (function() {
+  let board = Array(9).fill(null);
+  let isGameOver = false;
+  let currentTurn = 'X'; // X is always player 1 / user
+  let mode = 'hard';
+  let isActive = false;
+  
+  const el = document.getElementById('ttt-board');
+  const statusEl = document.getElementById('ttt-status');
+  const overlay = document.getElementById('ttt-overlay');
+
+  const winPatterns = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+  ];
+
+  function checkWin(b) {
+    for (let p of winPatterns) {
+      if (b[p[0]] && b[p[0]] === b[p[1]] && b[p[0]] === b[p[2]]) return b[p[0]];
+    }
+    if (!b.includes(null)) return 'tie';
+    return null;
+  }
+
+  function render() {
+    el.innerHTML = '';
+    board.forEach((val, i) => {
+      const sq = document.createElement('div');
+      sq.className = `t-sq ${val ? 'taken' : ''} ${val==='X'?'x-mark':val==='O'?'o-mark':''}`;
+      sq.textContent = val || '';
+      sq.onclick = () => playerMove(i);
+      el.appendChild(sq);
+    });
+  }
+
+  function start() {
+    mode = document.getElementById('ttt-mode').value;
+    board = Array(9).fill(null);
+    isGameOver = false;
+    currentTurn = 'X';
+    isActive = true;
+    overlay.classList.add('hidden');
+    statusEl.classList.remove('win');
+    statusEl.textContent = mode === '2p' ? 'Player 1 (X) Turn' : 'Your Turn (X)';
+    SysLog.msg(`TTT: Grid initialized. Mode: ${mode.toUpperCase()}`);
+    render();
+  }
+
+  function playerMove(i) {
+    if (!isActive || isGameOver || board[i]) return;
+    board[i] = currentTurn;
+    SysLog.msg(`TTT: ${currentTurn} marked cell ${i}`);
+    render();
+    
+    let res = checkWin(board);
+    if (res) { endGame(res); return; }
+
+    if (mode === '2p') {
+      currentTurn = currentTurn === 'X' ? 'O' : 'X';
+      statusEl.textContent = `Player ${currentTurn==='X'?'1':'2'} (${currentTurn}) Turn`;
+    } else {
+      currentTurn = 'O'; // Lock out user
+      statusEl.textContent = 'CPU Computing...';
+      setTimeout(cpuMove, 100);
+    }
+  }
+
+  function getRandMove(b) {
+    let empty = b.map((v, i) => v === null ? i : null).filter(v => v !== null);
+    return empty[Math.floor(Math.random() * empty.length)];
+  }
+
+  function findWinningMove(b, p) {
+    for (let i=0; i<9; i++) {
+      if (!b[i]) {
+        b[i] = p;
+        let win = checkWin(b) === p;
+        b[i] = null;
+        if (win) return i;
+      }
+    }
+    return -1;
+  }
+
+  function minimax(b, depth, isMax) {
+    let res = checkWin(b);
+    if (res === 'O') return 10 - depth;
+    if (res === 'X') return depth - 10;
+    if (res === 'tie') return 0;
+
+    if (isMax) {
+      let best = -Infinity;
+      for (let i=0; i<9; i++) {
+        if (!b[i]) {
+          b[i] = 'O';
+          best = Math.max(best, minimax(b, depth+1, false));
+          b[i] = null;
+        }
+      }
+      return best;
+    } else {
+      let best = Infinity;
+      for (let i=0; i<9; i++) {
+        if (!b[i]) {
+          b[i] = 'X';
+          best = Math.min(best, minimax(b, depth+1, true));
+          b[i] = null;
+        }
+      }
+      return best;
+    }
+  }
+
+  function cpuMove() {
+    if (isGameOver) return;
+    let move = -1;
+
+    if (mode === 'easy') {
+      move = getRandMove(board);
+    } 
+    else if (mode === 'medium') {
+      move = findWinningMove(board, 'O');
+      if (move === -1) move = findWinningMove(board, 'X');
+      if (move === -1) move = getRandMove(board);
+    } 
+    else if (mode === 'hard') {
+      let bestScore = -Infinity;
+      for (let i=0; i<9; i++) {
+        if (!board[i]) {
+          board[i] = 'O';
+          let score = minimax(board, 0, false);
+          board[i] = null;
+          if (score > bestScore) {
+            bestScore = score;
+            move = i;
+          }
+        }
+      }
+    }
+
+    board[move] = 'O';
+    SysLog.msg(`TTT: CPU marked cell ${move}`);
+    render();
+
+    let res = checkWin(board);
+    if (res) endGame(res);
+    else {
+      currentTurn = 'X';
+      statusEl.textContent = 'Your Turn (X)';
+    }
+  }
+
+  function endGame(res) {
+    isGameOver = true;
+    statusEl.classList.add('win');
+    if (res === 'tie') {
+      statusEl.textContent = 'Draw. Optimal play detected.';
+      SysLog.msg('TTT: Match drawn.');
+    } else {
+      let winner = (mode !== '2p' && res === 'O') ? 'CPU' : `Player (${res})`;
+      statusEl.textContent = `${winner} Wins.`;
+      SysLog.msg(`TTT: ${winner} claims victory.`);
+    }
+  }
+
+  function reset() {
+    start();
+  }
+
+  return { reset, render, start };
+})();
+
+
+/* ─────────────────────────────────────────
+   CHESS ENGINE (Compact, Depth 2)
+───────────────────────────────────────── */
+const ChessEngine = (function() {
+  const SYMBOLS = { 'k':'♚','q':'♛','r':'♜','b':'♝','n':'♞','p':'♟' };
+  const PIECE_VALUES = { 'p':10, 'n':30, 'b':30, 'r':50, 'q':90, 'k':900 };
+  const INITIAL = [
+    ['r','n','b','q','k','b','n','r'],
+    ['p','p','p','p','p','p','p','p'],
+    [null,null,null,null,null,null,null,null],
+    [null,null,null,null,null,null,null,null],
+    [null,null,null,null,null,null,null,null],
+    [null,null,null,null,null,null,null,null],
+    ['p','p','p','p','p','p','p','p'],
+    ['r','n','b','q','k','b','n','r']
+  ];
+
+  let board = INITIAL.map((row, r) => row.map((pt) => pt ? { type: pt, color: r<=1?'b':'w' } : null));
+  let currentTurn = 'w', sel = null, validMoves = [];
+  let isGameOver = false, checkedKing = null, isThinking = false;
+  let lastMove = null; let isActive = false; let gameMode = 'medium';
+  
+  const el = document.getElementById('chess-board');
+  const statEl = document.getElementById('chess-status');
+  const overlay = document.getElementById('chess-overlay');
+
+  function start() {
+    board = INITIAL.map((row, r) => row.map((pt) => pt ? { type: pt, color: r<=1?'b':'w' } : null));
+    currentTurn = 'w'; sel = null; validMoves = []; isGameOver = false;
+    checkedKing = null; isThinking = false; lastMove = null;
+    gameMode = document.getElementById('chess-mode').value;
+    isActive = true;
+    overlay.classList.add('hidden');
+    statEl.textContent = "White's Turn";
+    SysLog.msg(`CHESS: Board initialized. Mode: ${gameMode.toUpperCase()}`);
+    render();
+  }
+
+  function render() {
+    el.innerHTML = '';
+    for(let r=0; r<8; r++) {
+      for(let c=0; c<8; c++) {
+        const sq = document.createElement('div');
+        sq.className = `c-sq ${(r+c)%2===0?'light':'dark'}`;
+        
+        if (sel && sel.r===r && sel.c===c) sq.classList.add('selected');
+        if (validMoves.some(m => m.r===r && m.c===c)) sq.classList.add('valid-move');
+        if (checkedKing && checkedKing.r===r && checkedKing.c===c) sq.classList.add('in-check');
+        if (lastMove) {
+          if(lastMove.from.r===r && lastMove.from.c===c) sq.classList.add('last-from');
+          if(lastMove.to.r===r && lastMove.to.c===c) sq.classList.add('last-to');
+        }
+
+        const p = board[r][c];
+        if (p) {
+          const pEl = document.createElement('span');
+          pEl.className = `c-piece ${p.color}`;
+          pEl.textContent = SYMBOLS[p.type];
+          sq.appendChild(pEl);
+        }
+        sq.onclick = () => handleClick(r, c);
+        el.appendChild(sq);
+      }
+    }
+  }
+
+  function handleClick(r, c) {
+    if (!isActive || isGameOver || isThinking) return;
+    if (gameMode !== '2p' && currentTurn === 'b') return;
+    const p = board[r][c];
+    const isMove = validMoves.some(m => m.r===r && m.c===c);
+    
+    if (sel) {
+      if (isMove) { execute(sel.r, sel.c, r, c); return; }
+      if (p && p.color === currentTurn) { sel = {r,c}; validMoves = getLegal(board, currentTurn, r, c); render(); }
+      else { sel = null; validMoves = []; render(); }
+    } else {
+      if (p && p.color === currentTurn) { sel = {r,c}; validMoves = getLegal(board, currentTurn, r, c); render(); }
+    }
+  }
+
+  function execute(fr, fc, tr, tc) {
+    const p = board[fr][fc];
+    lastMove = { from: {r:fr, c:fc}, to: {r:tr, c:tc} };
+    board[tr][tc] = p; board[fr][fc] = null;
+    if (p.type==='p' && (tr===0||tr===7)) p.type='q'; // auto queen
+    
+    currentTurn = currentTurn === 'w' ? 'b' : 'w';
+    sel = null; validMoves = [];
+    
+    checkState();
+    if (!isGameOver && gameMode !== '2p' && currentTurn === 'b') {
+      isThinking = true;
+      statEl.textContent = "CPU Computing...";
+      setTimeout(cpuMove, 50);
+    }
+  }
+
+  // --- Logic Helpers ---
+  function clone(b) { return b.map(row => row.map(cell => cell ? {...cell} : null)); }
+  function inBounds(r, c) { return r>=0 && r<8 && c>=0 && c<8; }
+
+  function getPseudo(b, r, c) {
+    const p = b[r][c]; if (!p) return [];
+    const res = []; const dir = p.color==='w'?-1:1; const startR = p.color==='w'?6:1;
+    
+    if (p.type === 'p') {
+      if (inBounds(r+dir,c) && !b[r+dir][c]) {
+        res.push({r:r+dir, c});
+        if (r===startR && !b[r+dir*2][c]) res.push({r:r+dir*2, c});
+      }
+      if (inBounds(r+dir, c-1) && b[r+dir][c-1] && b[r+dir][c-1].color!==p.color) res.push({r:r+dir, c:c-1});
+      if (inBounds(r+dir, c+1) && b[r+dir][c+1] && b[r+dir][c+1].color!==p.color) res.push({r:r+dir, c:c+1});
+      return res;
+    }
+    const slide = {'r':[[0,1],[0,-1],[1,0],[-1,0]], 'b':[[1,1],[1,-1],[-1,1],[-1,-1]], 'q':[[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]]};
+    if (slide[p.type]) {
+      for(let d of slide[p.type]){
+        let nr=r+d[0], nc=c+d[1];
+        while(inBounds(nr,nc)){
+          if(!b[nr][nc]){ res.push({r:nr,c:nc}); } 
+          else { if(b[nr][nc].color!==p.color) res.push({r:nr,c:nc}); break; }
+          nr+=d[0]; nc+=d[1];
+        }
+      }
+      return res;
+    }
+    const step = {'n':[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]], 'k':[[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]]};
+    if (step[p.type]) {
+      for(let d of step[p.type]){
+        let nr=r+d[0], nc=c+d[1];
+        if(inBounds(nr,nc) && (!b[nr][nc] || b[nr][nc].color!==p.color)) res.push({r:nr,c:nc});
+      }
+    }
+    return res;
+  }
+
+  function inCheck(b, col) {
+    let kr=-1, kc=-1;
+    for(let r=0;r<8;r++) for(let c=0;c<8;c++) { const p=b[r][c]; if(p && p.type==='k' && p.color===col){ kr=r; kc=c; break;} }
+    if (kr===-1) return false;
+    const opp = col==='w'?'b':'w';
+    for(let r=0;r<8;r++) for(let c=0;c<8;c++) {
+      const p=b[r][c];
+      if(p && p.color===opp && getPseudo(b,r,c).some(m => m.r===kr && m.c===kc)) return true;
+    }
+    return false;
+  }
+
+  function getLegal(b, col, r, c) {
+    return getPseudo(b,r,c).filter(m => {
+      const cpy = clone(b); cpy[m.r][m.c] = cpy[r][c]; cpy[r][c] = null;
+      return !inCheck(cpy, col);
+    });
+  }
+
+  function allLegal(b, col) {
+    let res = [];
+    for(let r=0;r<8;r++) for(let c=0;c<8;c++){
+      const p=b[r][c]; if(p && p.color===col) getLegal(b,col,r,c).forEach(m => res.push({from:{r,c}, to:m}));
+    }
+    return res;
+  }
+
+  function checkState() {
+    checkedKing = null;
+    const chk = inCheck(board, currentTurn);
+    if(chk) {
+      for(let r=0;r<8;r++) for(let c=0;c<8;c++){ const p=board[r][c]; if(p&&p.type==='k'&&p.color===currentTurn) checkedKing={r,c}; }
+    }
+    const moves = allLegal(board, currentTurn);
+    if (moves.length===0) {
+      isGameOver = true;
+      statEl.textContent = chk ? `Checkmate. ${currentTurn==='w'?'Black':'White'} wins.` : "Stalemate.";
+      SysLog.msg(`CHESS: System halted. ${statEl.textContent}`);
+    } else {
+      statEl.textContent = chk ? "Check!" : (currentTurn==='w' ? "White's Turn" : "Black's Turn");
+    }
+    render();
+  }
+
+  // --- AI ---
+  function eval(b) {
+    let s=0;
+    for(let r=0;r<8;r++) for(let c=0;c<8;c++) {
+      const p=b[r][c]; if(!p) continue;
+      let v = PIECE_VALUES[p.type]; if(r>=3&&r<=4&&c>=3&&c<=4) v+=1;
+      s += p.color==='w'?v:-v;
+    }
+    return s;
+  }
+
+  function minimax(b, depth, alpha, beta, isMax) {
+    if(depth===0) return eval(b);
+    const col = isMax?'w':'b';
+    const moves = allLegal(b, col);
+    if(moves.length===0) return inCheck(b,col) ? (isMax?-9999:9999) : 0;
+
+    if(isMax) {
+      let max = -Infinity;
+      for(let m of moves) { let cpy=clone(b); cpy[m.to.r][m.to.c]=cpy[m.from.r][m.from.c]; cpy[m.from.r][m.from.c]=null;
+        let s = minimax(cpy, depth-1, alpha, beta, false);
+        max = Math.max(max, s); alpha = Math.max(alpha, s); if(beta<=alpha) break;
+      }
+      return max;
+    } else {
+      let min = Infinity;
+      for(let m of moves) { let cpy=clone(b); cpy[m.to.r][m.to.c]=cpy[m.from.r][m.from.c]; cpy[m.from.r][m.from.c]=null;
+        let s = minimax(cpy, depth-1, alpha, beta, true);
+        min = Math.min(min, s); beta = Math.min(beta, s); if(beta<=alpha) break;
+      }
+      return min;
+    }
+  }
+
+  function cpuMove() {
+    const moves = allLegal(board, 'b');
+    if(!moves.length) return;
+    let bestMove = null; let bestScore = Infinity;
+    moves.sort(() => Math.random()-0.5); // shuffle for variety
+    
+    // Depth 2 for performance
+    if (gameMode === 'easy') {
+      bestMove = moves[Math.floor(Math.random()*moves.length)];
+    } else {
+      const depth = gameMode === 'medium' ? 2 : 3;
+      for(let m of moves) {
+        let cpy=clone(board); cpy[m.to.r][m.to.c]=cpy[m.from.r][m.from.c]; cpy[m.from.r][m.from.c]=null;
+        let s = minimax(cpy, depth-1, -Infinity, Infinity, true);
+        if(s < bestScore) { bestScore = s; bestMove = m; }
+      }
+    }
+    
+    isThinking = false;
+    SysLog.msg(`CHESS: CPU evaluated state. Executing move.`);
+    execute(bestMove.from.r, bestMove.from.c, bestMove.to.r, bestMove.to.c);
+  }
+
+  return { reset: start, render, start };
+})();
+
+
+// Boot
+window.onload = () => {
+  TTTEngine.render();
+  ChessEngine.render();
+};
+</script>
+</body>
+</html>
