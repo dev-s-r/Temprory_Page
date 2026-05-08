@@ -236,7 +236,8 @@
         }
       }
 
-      this.ball.x = 500; this.ball.y = 340;
+      this.ball.x = bCanvas.width / 2;
+      this.ball.y = bCanvas.height - 60;
       const speed = 6 + (lvlIndex * 1.2); 
       this.ball.dx = speed * (Math.random() > 0.5 ? 1 : -1);
       this.ball.dy = -speed;
@@ -249,6 +250,7 @@
     if(activeGame && activeGame !== 'breakout') return;
     activeGame = 'breakout';
     if(bReq) cancelAnimationFrame(bReq);
+    bCanvas.style.touchAction = 'none';
     
     document.getElementById('breakout-ui').style.opacity = '0';
     setTimeout(() => { document.getElementById('breakout-ui').style.pointerEvents = 'none'; }, 300);
@@ -402,6 +404,7 @@
     if(activeGame && activeGame !== 'snake') return;
     activeGame = 'snake';
     if(sReq) cancelAnimationFrame(sReq);
+    sCanvas.style.touchAction = 'none';
     
     document.getElementById('snake-ui').style.opacity = '0';
     sCanvas.style.opacity = '1';
@@ -432,9 +435,6 @@
       else if(diffY < -SWIPE_THRESHOLD && snakeGame.dy === 0) { snakeGame.dx = 0; snakeGame.dy = -snakeGame.grid; }
     }
   }
-
-  sCanvas.style.touchAction = 'none';
-  bCanvas.style.touchAction = 'none';
 
   sCanvas.addEventListener('touchstart', e => {
     if(activeGame !== 'snake') return;
