@@ -27,6 +27,7 @@
         },
         animation: {
           'blink': 'blink 1s step-end infinite',
+          'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         },
         keyframes: {
           blink: {
@@ -60,13 +61,13 @@
         
         <div id="breakout-ui" class="relative z-10 transition-opacity duration-300">
           <h1 class="font-display font-extrabold text-[3.5rem] leading-[0.95] md:text-[6.5rem] tracking-tighter mb-6 md:mb-8 uppercase">
-            Site.<br>Under.<br>Rebuild<span class="animate-blink text-consume">_</span>
+            Site.<br>Under.<br>Rebuild<span id="cursor-underscore" class="animate-blink text-consume inline-block">_</span>
           </h1>
           <div class="space-y-4 md:space-y-6 text-muted text-base md:text-xl leading-relaxed max-w-2xl font-medium">
             <p>The old architecture got messy. Scrapping the codebase and starting over. Figuring out a cleaner structure for the data.</p>
             
             <button onclick="startBreakout()" class="mt-8 flex items-center gap-3 border-2 border-ink px-4 py-2 font-mono text-xs font-bold uppercase hover:bg-ink hover:text-paper transition-all">
-              <span class="w-2 h-2 bg-consume animate-pulse block"></span>
+              <span class="w-2 h-2 bg-consume animate-pulse-fast block"></span>
               Run: Demolition
             </button>
           </div>
@@ -104,7 +105,7 @@
         <canvas id="snakeCanvas" class="absolute inset-0 w-full h-full opacity-0 pointer-events-none transition-opacity duration-300 z-20"></canvas>
       </div>
 
-      <!-- GAME 3: Sequence Diagnostic Data Blocks -->
+      <!-- Sequence Diagnostic Data Blocks -->
       
       <div id="seq-0" onclick="handleSeqInput(0)" class="bg-consume text-white p-5 md:p-10 flex flex-col justify-between min-h-[180px] md:min-h-[320px] col-span-2 transition-all duration-150">
         <div class="flex justify-between w-full items-center text-[10px] md:text-xs font-mono font-bold tracking-widest uppercase mb-8 md:mb-12 shrink-0 opacity-70 pointer-events-none">
@@ -160,103 +161,98 @@
 <script>
   let activeGame = null;
 
-  // --- GAME 1: BREAKOUT (2D Packing Layout) ---
+  // --- GAME 1: BREAKOUT (Memory Purge) ---
   const bCanvas = document.getElementById('breakoutCanvas');
   const bCtx = bCanvas.getContext('2d');
   let bReq;
   let bActive = false;
 
   const breakout = {
-    ball: { x: 500, y: 350, dx: 6, dy: -6, radius: 6, isStuck: true },
-    paddle: { w: 100, h: 10, x: 450, y: 380 },
+    ball: { x: 500, y: 350, dx: 6, dy: -6, radius: 6, isStuck: true, trail: [] },
+    paddle: { w: 100, h: 12, x: 450, y: 380, targetY: 380, isDropping: false },
     bricks: [],
     currentLevel: 0,
-    colors: ['#F4F6F8', '#2563EB', '#059669', '#E11D48', '#D97706'], 
+    colors: ['#0B1221', '#2563EB', '#059669', '#E11D48', '#D97706'],
+    
     initLevel: function(lvlIndex) {
       this.bricks = [];
+      this.ball.trail = [];
       
-      const cols = 15;
-      const rows = 5 + Math.floor(lvlIndex / 2); 
-      const stepX = 55;
-      const stepY = 40;
-      const gap = 16;
-      
-      const startX = (1000 - (cols * stepX)) / 2 + (gap / 2);
-      const startY = 30;
-
-      let occupied = Array(rows).fill().map(() => Array(cols).fill(false));
-      let colorIdx = 0;
-
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          if (occupied[r][c]) continue;
-
-          // 15% chance to leave a permanent hole for lanes
-          if (Math.random() < 0.15) {
-            occupied[r][c] = true;
-            continue;
-          }
-
-          let maxW = 1;
-          while (c + maxW < cols && !occupied[r][c + maxW] && maxW < 3) maxW++;
-          
-          let maxH = 1;
-          while (r + maxH < rows && !occupied[r + maxH][c] && maxH < 3) {
-            let canFit = true;
-            for (let i = 0; i < maxW; i++) {
-              if (occupied[r + maxH][c + i]) canFit = false;
-            }
-            if (!canFit) break;
-            maxH++;
-          }
-
-          let wCells = 1;
-          let hCells = 1;
-          const shapeRoll = Math.random();
-
-          if (maxW > 1 && maxH > 1) {
-            if (shapeRoll < 0.3) { wCells = 2; hCells = 1; } 
-            else if (shapeRoll < 0.6) { wCells = 1; hCells = 2; } 
-            else if (shapeRoll < 0.8) { wCells = 2; hCells = 2; } 
-          } else if (maxW > 1) {
-            if (shapeRoll < 0.6) wCells = 2;
-            if (maxW > 2 && shapeRoll < 0.2) wCells = 3;
-          } else if (maxH > 1) {
-            if (shapeRoll < 0.7) hCells = 2;
-          }
-
-          let valid = true;
-          for (let dr = 0; dr < hCells; dr++) {
-            for (let dc = 0; dc < wCells; dc++) {
-              if (occupied[r + dr][c + dc]) valid = false;
-            }
-          }
-
-          if (valid) {
-            for (let dr = 0; dr < hCells; dr++) {
-              for (let dc = 0; dc < wCells; dc++) {
-                occupied[r + dr][c + dc] = true;
-              }
-            }
-
-            this.bricks.push({
-              x: startX + c * stepX,
-              y: startY + r * stepY,
-              w: (wCells * stepX) - gap,
-              h: (hCells * stepY) - gap,
-              status: 1,
-              color: this.colors[colorIdx % this.colors.length]
-            });
-            colorIdx++;
-          }
-        }
-      }
-
-      this.ball.x = 500; this.ball.y = 340;
       const speed = 5 + (lvlIndex * 0.8); 
       this.ball.dx = speed * (Math.random() > 0.5 ? 1 : -1);
       this.ball.dy = -speed;
       this.ball.isStuck = true;
+
+      const cols = 20;
+      const rows = 8 + Math.floor(lvlIndex / 2); 
+      const stepX = 40;
+      const stepY = 20;
+      const gap = 2; 
+      const startX = (1000 - (cols * stepX)) / 2 + (gap / 2);
+      const startY = 30;
+
+      let generatedBlocks = [];
+      const halfCols = cols / 2;
+
+      // Recursive subdivision algorithm (creates beautiful wireframe layout)
+      function subdivide(c, r, w, h) {
+          const maxW = 3;
+          const maxH = 3;
+
+          if (w <= maxW && h <= maxH) {
+              if (Math.random() < 0.05) return; // Chance for empty holes
+              if (w > 1 && h > 1 && Math.random() < 0.4) {} 
+              else {
+                  generatedBlocks.push({ c, r, w, h });
+                  return;
+              }
+          }
+
+          let splitHoriz = false;
+          if (w > maxW && h <= maxH) splitHoriz = false; 
+          else if (h > maxH && w <= maxW) splitHoriz = true;  
+          else splitHoriz = (Math.random() * h) > (Math.random() * w); 
+
+          if (splitHoriz) {
+              let split = Math.floor(h / 2);
+              if (h > 2 && Math.random() > 0.5) split += (Math.random() > 0.5 ? 1 : -1); 
+              split = Math.max(1, Math.min(split, h - 1)); 
+              subdivide(c, r, w, split);
+              subdivide(c, r + split, w, h - split);
+          } else {
+              let split = Math.floor(w / 2);
+              if (w > 2 && Math.random() > 0.5) split += (Math.random() > 0.5 ? 1 : -1);
+              split = Math.max(1, Math.min(split, w - 1)); 
+              subdivide(c, r, split, h);
+              subdivide(c + split, r, w - split, h);
+          }
+      }
+
+      subdivide(0, 0, halfCols, rows);
+
+      // Create blocks and mirror them symmetrically
+      generatedBlocks.forEach(block => {
+          const blockColor = this.colors[Math.floor(Math.random() * this.colors.length)];
+
+          this.bricks.push({
+              x: startX + block.c * stepX,
+              y: startY + block.r * stepY,
+              w: (block.w * stepX) - gap,
+              h: (block.h * stepY) - gap,
+              status: 1, 
+              color: blockColor
+          });
+
+          const mirroredC = cols - block.c - block.w;
+          this.bricks.push({
+              x: startX + mirroredC * stepX,
+              y: startY + block.r * stepY,
+              w: (block.w * stepX) - gap,
+              h: (block.h * stepY) - gap,
+              status: 1, 
+              color: blockColor
+          });
+      });
     }
   };
 
@@ -265,6 +261,26 @@
     activeGame = 'breakout';
     if(bReq) cancelAnimationFrame(bReq);
     
+    // Map underscore DOM coordinates to canvas space
+    const cursor = document.getElementById('cursor-underscore');
+    const uRect = cursor.getBoundingClientRect();
+    const cRect = bCanvas.getBoundingClientRect();
+    
+    const scaleX = bCanvas.width / cRect.width;
+    const scaleY = bCanvas.height / cRect.height;
+    
+    breakout.paddle.w = Math.max(uRect.width * scaleX, 80); 
+    breakout.paddle.h = 12;
+    breakout.paddle.x = (uRect.left - cRect.left) * scaleX;
+    breakout.paddle.y = ((uRect.bottom - cRect.top) * scaleY) - 16; 
+    breakout.paddle.targetY = bCanvas.height - 40;
+    breakout.paddle.isDropping = true;
+    
+    cursor.style.visibility = 'hidden'; 
+
+    breakout.ball.x = breakout.paddle.x + (breakout.paddle.w / 2);
+    breakout.ball.y = breakout.paddle.y - breakout.ball.radius - 1;
+
     document.getElementById('breakout-ui').style.opacity = '0';
     setTimeout(() => { document.getElementById('breakout-ui').style.pointerEvents = 'none'; }, 300);
     
@@ -281,6 +297,9 @@
     document.getElementById('breakout-interstitial').style.opacity = '0';
     document.getElementById('breakout-interstitial').style.pointerEvents = 'none';
     
+    breakout.paddle.y = bCanvas.height - 40;
+    breakout.paddle.isDropping = false;
+    
     breakout.currentLevel++;
     breakout.initLevel(breakout.currentLevel);
     bActive = true;
@@ -292,7 +311,6 @@
     const rect = bCanvas.getBoundingClientRect();
     let percentX = (clientX - rect.left) / rect.width;
     breakout.paddle.x = percentX * bCanvas.width - (breakout.paddle.w / 2);
-    
     if(breakout.paddle.x < 0) breakout.paddle.x = 0;
     if(breakout.paddle.x > bCanvas.width - breakout.paddle.w) breakout.paddle.x = bCanvas.width - breakout.paddle.w;
   }
@@ -305,31 +323,39 @@
 
   function releaseBall() {
     if (bActive && breakout.ball.isStuck) {
+      if (breakout.paddle.isDropping) {
+          // If clicked early, force drop completion instantly
+          breakout.paddle.y = breakout.paddle.targetY;
+          breakout.paddle.isDropping = false;
+      }
       breakout.ball.isStuck = false;
     }
   }
-
   bCanvas.addEventListener('mousedown', releaseBall);
   bCanvas.addEventListener('touchstart', releaseBall, {passive: true});
 
   function drawBreakout() {
     if(!bActive) return;
     bCtx.clearRect(0, 0, bCanvas.width, bCanvas.height);
-    
-    bCtx.lineWidth = 2.5;
-    bCtx.strokeStyle = '#0B1221';
     let activeBricks = 0;
 
-    breakout.bricks.forEach(b => {
-      if(b.status) {
-        activeBricks++;
+    // --- RENDER BRICKS ---
+    for(let i = breakout.bricks.length - 1; i >= 0; i--) {
+      let b = breakout.bricks[i];
+      
+      if(b.status === 1) activeBricks++;
+      if(b.status === 2) {
+        // Disk Defrag shrink animation
+        b.w *= 0.8; b.h *= 0.8; b.x += (b.w / 0.8) * 0.1; b.y += (b.h / 0.8) * 0.1;
+        if(b.w < 1) b.status = 0;
+      }
+      if(b.status > 0) {
         bCtx.fillStyle = b.color;
         bCtx.fillRect(b.x, b.y, b.w, b.h);
-        bCtx.strokeRect(b.x, b.y, b.w, b.h);
       }
-    });
+    }
 
-    if(activeBricks === 0) {
+    if(activeBricks === 0 && breakout.bricks.filter(b => b.status === 2).length === 0) {
       bActive = false;
       document.getElementById('breakout-sector-text').innerText = `Sector 0${breakout.currentLevel + 1} Cleared`;
       document.getElementById('breakout-interstitial').style.opacity = '1';
@@ -337,33 +363,56 @@
       return; 
     }
 
-    bCtx.fillStyle = '#0B1221';
+    // --- PADDLE DROP ANIMATION ---
+    if (breakout.paddle.isDropping) {
+      breakout.paddle.y += (breakout.paddle.targetY - breakout.paddle.y) * 0.08;
+      if (Math.abs(breakout.paddle.targetY - breakout.paddle.y) < 0.5) {
+        breakout.paddle.y = breakout.paddle.targetY;
+        breakout.paddle.isDropping = false;
+      }
+    }
+
+    // --- DRAW PADDLE ---
+    bCtx.fillStyle = '#D97706'; 
     bCtx.fillRect(breakout.paddle.x, breakout.paddle.y, breakout.paddle.w, breakout.paddle.h);
 
-    bCtx.beginPath();
-    bCtx.arc(breakout.ball.x, breakout.ball.y, breakout.ball.radius, 0, Math.PI*2);
-    bCtx.fillStyle = '#D97706';
+    // --- DRAW BALL & TRAIL ---
+    if (!breakout.ball.isStuck) {
+      breakout.ball.trail.push({x: breakout.ball.x, y: breakout.ball.y});
+      if(breakout.ball.trail.length > 8) breakout.ball.trail.shift();
+      breakout.ball.trail.forEach((pos, idx) => {
+        bCtx.globalAlpha = idx / 8;
+        bCtx.fillStyle = '#0B1221';
+        bCtx.beginPath(); bCtx.arc(pos.x, pos.y, breakout.ball.radius * 0.8, 0, Math.PI*2); bCtx.fill(); bCtx.closePath();
+      });
+      bCtx.globalAlpha = 1;
+    }
+
+    bCtx.beginPath(); bCtx.arc(breakout.ball.x, breakout.ball.y, breakout.ball.radius, 0, Math.PI*2);
+    bCtx.fillStyle = '#0B1221'; 
     bCtx.fill();
     bCtx.closePath();
 
+    // --- PHYSICS LOOP ---
     if (breakout.ball.isStuck) {
       breakout.ball.x = breakout.paddle.x + (breakout.paddle.w / 2);
       breakout.ball.y = breakout.paddle.y - breakout.ball.radius - 1;
     } else {
       let {x, y, dx, dy, radius} = breakout.ball;
       
+      // Wall Bounce
       if(x + dx > bCanvas.width - radius || x + dx < radius) breakout.ball.dx = -dx;
       if(y + dy < radius) breakout.ball.dy = -dy;
       else if(y + dy > bCanvas.height - radius) {
-        bActive = false;
-        activeGame = null;
-        document.getElementById('breakout-ui').style.opacity = '1';
-        document.getElementById('breakout-ui').style.pointerEvents = 'auto';
-        bCanvas.style.opacity = '0';
-        bCanvas.style.pointerEvents = 'none';
+        // Game Over Reset
+        bActive = false; activeGame = null;
+        document.getElementById('breakout-ui').style.opacity = '1'; document.getElementById('breakout-ui').style.pointerEvents = 'auto';
+        document.getElementById('cursor-underscore').style.visibility = 'visible';
+        bCanvas.style.opacity = '0'; bCanvas.style.pointerEvents = 'none';
         return;
       }
 
+      // Paddle Bounce
       if (y + dy + radius >= breakout.paddle.y && y + radius <= breakout.paddle.y + breakout.paddle.h && dy > 0) {
         if (x + radius >= breakout.paddle.x && x - radius <= breakout.paddle.x + breakout.paddle.w) {
           breakout.ball.dy = -Math.abs(dy); 
@@ -372,18 +421,13 @@
         }
       }
 
+      // Brick Collisions
       breakout.bricks.forEach(b => {
-        if(b.status && x + radius > b.x && x - radius < b.x + b.w && y + radius > b.y && y - radius < b.y + b.h) {
-          b.status = 0;
-          let prevX = x - dx;
-          let prevY = y - dy;
-
-          if (prevX + radius <= b.x || prevX - radius >= b.x + b.w) {
-            breakout.ball.dx = -breakout.ball.dx;
-          }
-          if (prevY + radius <= b.y || prevY - radius >= b.y + b.h) {
-            breakout.ball.dy = -breakout.ball.dy;
-          }
+        if(b.status === 1 && x + radius > b.x && x - radius < b.x + b.w && y + radius > b.y && y - radius < b.y + b.h) {
+          b.status = 2; // Begin shrinking animation
+          let prevX = x - dx; let prevY = y - dy;
+          if (prevX + radius <= b.x || prevX - radius >= b.x + b.w) breakout.ball.dx = -breakout.ball.dx;
+          if (prevY + radius <= b.y || prevY - radius >= b.y + b.h) breakout.ball.dy = -breakout.ball.dy;
         }
       });
 
